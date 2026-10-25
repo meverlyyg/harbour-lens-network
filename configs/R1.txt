@@ -1,0 +1,96 @@
+! R1 - Cisco 2911 router (router-on-a-stick, DHCP, guest ACL)
+! Exported with: show running-config
+!
+version 15.1
+no service timestamps log datetime msec
+no service timestamps debug datetime msec
+no service password-encryption
+!
+hostname R1
+!
+ip dhcp excluded-address 10.20.0.1
+ip dhcp excluded-address 10.20.0.97
+ip dhcp excluded-address 10.20.0.129
+ip dhcp excluded-address 10.20.0.65
+!
+ip dhcp pool CREATIVE
+ network 10.20.0.0 255.255.255.192
+ default-router 10.20.0.1
+ dns-server 10.20.0.146
+ip dhcp pool SALES
+ network 10.20.0.96 255.255.255.224
+ default-router 10.20.0.97
+ dns-server 10.20.0.146
+ip dhcp pool ADMIN
+ network 10.20.0.128 255.255.255.240
+ default-router 10.20.0.129
+ dns-server 10.20.0.146
+ip dhcp pool GUEST
+ network 10.20.0.64 255.255.255.224
+ default-router 10.20.0.65
+ dns-server 10.20.0.146
+!
+ip cef
+no ipv6 cef
+!
+no ip domain-lookup
+!
+spanning-tree mode pvst
+!
+interface GigabitEthernet0/0
+ no ip address
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/0.10
+ encapsulation dot1Q 10
+ ip address 10.20.0.1 255.255.255.192
+!
+interface GigabitEthernet0/0.20
+ encapsulation dot1Q 20
+ ip address 10.20.0.97 255.255.255.224
+!
+interface GigabitEthernet0/0.30
+ encapsulation dot1Q 30
+ ip address 10.20.0.129 255.255.255.240
+!
+interface GigabitEthernet0/0.40
+ encapsulation dot1Q 40
+ ip address 10.20.0.65 255.255.255.224
+ ip access-group GUEST-BLOCK in
+!
+interface GigabitEthernet0/0.50
+ encapsulation dot1Q 50
+ ip address 10.20.0.145 255.255.255.240
+!
+interface GigabitEthernet0/1
+ no ip address
+ duplex auto
+ speed auto
+ shutdown
+!
+interface GigabitEthernet0/2
+ no ip address
+ duplex auto
+ speed auto
+ shutdown
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+ip classless
+!
+ip access-list extended GUEST-BLOCK
+ permit udp 10.20.0.64 0.0.0.31 host 10.20.0.146 eq domain
+ deny ip 10.20.0.64 0.0.0.31 10.20.0.0 0.0.0.255
+ permit ip any any
+!
+line con 0
+!
+line aux 0
+!
+line vty 0 4
+ login
+!
+end
